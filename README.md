@@ -1,22 +1,29 @@
-# PlayURLLogger V6.1 - Lightweight Runtime Scout
+# PlayURLLogger V7
 
-V6.1 fixes the V6 startup stall by doing **no class/method enumeration in the constructor or on the main queue**.
+Purpose: focused runtime diagnostics for the playback path discovered by V6.1.
 
-## What changed
-- Dedicated log: `Documents/PlayURLLoggerV6_Runtime.txt`
-- Immediate marker: `######## PLAYURLLOGGER V6.1 ACTIVE ########`
-- Logs its own dylib path, bundle id and pid
-- Keeps the proven `NSURL URLWithString:` observer with credential redaction
-- Runtime scans only at ~8s, 20s and 40s on a serial utility queue
-- dyld image callback does no heavy work; it only coalesces a delayed background rescan
-- Only classes matching WebRTC/HWLLS/IJK/FFmpeg/TRTC-related keywords have their methods enumerated
-- Method type encodings are recorded to make later hooks safer
+## What changed from V6.1
+- No global Objective-C class scan.
+- Hooks only exact HWLLS/WebRTC selectors observed in the V6.1 runtime log.
+- Tries known IJK fallback selectors; missing selectors are logged safely.
+- Keeps media URL logging.
+- Redacts common authentication query parameters.
+- Writes to `Documents/PlayURLLoggerV7.txt`.
+
+## GitHub
+Upload:
+- `PlayURLLoggerV7.m` to repository root
+- `.github/workflows/build-v7.yml` to the same path in the repository
+
+The workflow is path-filtered, so changing V7 will not intentionally trigger this V7 workflow for unrelated files.
 
 ## Test
-1. Build with GitHub Actions.
-2. Inject `PlayURLLoggerV61.dylib` (remove/disable older logger dylibs to avoid mixed logs).
-3. Launch app and confirm the home page opens normally.
-4. Wait ~10 seconds, enter a live room, stay 20-30 seconds, then exit.
-5. Export `Documents/PlayURLLoggerV6_Runtime.txt`.
+1. Build `Build PlayURLLoggerV7`.
+2. Download artifact `PlayURLLoggerV7`.
+3. Inject only `PlayURLLoggerV7.dylib` (disable older logger dylibs).
+4. Launch app and wait about 8 seconds.
+5. Enter one live room and remain for 20-30 seconds.
+6. Exit the room.
+7. Export `Documents/PlayURLLoggerV7.txt`.
 
-Do not publish live authentication credentials. V6.1 redacts common secret/token fields in URLs.
+Do not publish logs containing live credentials. V7 redacts common credential names, but review before sharing.
