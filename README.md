@@ -1,15 +1,22 @@
-# PlayURLLogger V6 — Runtime Scout
+# PlayURLLogger V6.1 - Lightweight Runtime Scout
 
-Diagnostic build for discovering the actual runtime classes, selectors, and loaded images involved in the app's playback path.
+V6.1 fixes the V6 startup stall by doing **no class/method enumeration in the constructor or on the main queue**.
 
-## Output
-`Documents/PlayURLLoggerV6.txt`
+## What changed
+- Dedicated log: `Documents/PlayURLLoggerV6_Runtime.txt`
+- Immediate marker: `######## PLAYURLLOGGER V6.1 ACTIVE ########`
+- Logs its own dylib path, bundle id and pid
+- Keeps the proven `NSURL URLWithString:` observer with credential redaction
+- Runtime scans only at ~8s, 20s and 40s on a serial utility queue
+- dyld image callback does no heavy work; it only coalesces a delayed background rescan
+- Only classes matching WebRTC/HWLLS/IJK/FFmpeg/TRTC-related keywords have their methods enumerated
+- Method type encodings are recorded to make later hooks safer
 
-## What it records
-- Interesting loaded Mach-O images/frameworks
-- Runtime Objective-C classes whose names relate to WebRTC/HWLLS/player/signaling/SDP/ICE/IJK/FFmpeg/TRTC
-- Interesting instance/class selectors on those classes
-- NSURL strings, with common credentials redacted
-- Re-scans for 60 seconds and reacts to newly loaded images
+## Test
+1. Build with GitHub Actions.
+2. Inject `PlayURLLoggerV61.dylib` (remove/disable older logger dylibs to avoid mixed logs).
+3. Launch app and confirm the home page opens normally.
+4. Wait ~10 seconds, enter a live room, stay 20-30 seconds, then exit.
+5. Export `Documents/PlayURLLoggerV6_Runtime.txt`.
 
-V6 intentionally does not dump cookies, authorization headers, or reusable authentication secrets.
+Do not publish live authentication credentials. V6.1 redacts common secret/token fields in URLs.
