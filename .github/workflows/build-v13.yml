@@ -1,0 +1,19 @@
+name: Build V13 HWLLS Signaling Downgrade Trace
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build arm64 dylib
+        run: |
+          set -euxo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          clang -arch arm64 -isysroot "$SDK" -miphoneos-version-min=14.0 \
+            -fobjc-arc -fblocks -dynamiclib -framework Foundation \
+            -install_name @rpath/V13HWLLSTrace.dylib \
+            V13HWLLSTrace.m -o V13HWLLSTrace.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: V13HWLLSTrace
+          path: V13HWLLSTrace.dylib
