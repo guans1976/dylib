@@ -1,20 +1,23 @@
-# V10 Object Inspector
+# V11 Endpoint Observer + PC Recorder
 
-Narrow diagnostic build based on the V9 trace.
+Purpose: observe a standard HLS / HTTP-FLV / RTMP endpoint that the app/SDK itself actually creates during its normal authorized playback/fallback path, write it to `Documents/playback_info.json`, then let a PC-side watcher hand that endpoint to FFmpeg.
 
-It inspects only objects already participating in the app's normal playback path:
-- HWLLSStartPlayOptions
-- RTCDnsResult
-- RTCSignalingSdpResp
+V11 does **not** synthesize an endpoint, alter authentication, force downgrade, or replay WebRTC/ICE credentials.
 
-The inspector enumerates Objective-C properties on those objects and calls only zero-argument property getters. It logs scalar values plus NSString/NSNumber values. Complex objects are logged by class name only.
+## Phone
+Build `V11EndpointObserver.dylib` with GitHub Actions and inject only this observer for the test.
 
-Privacy filters omit/redact properties whose names suggest SDP, tokens, secrets, ICE credentials, fingerprints, candidates, IP/address/host data.
+Files:
+- `Documents/playback_info.json`
+- `Documents/V11_EndpointObserver.log`
 
-## Test
-1. Inject only PlayURLLoggerV10.dylib.
-2. Launch and wait 10 seconds.
-3. Enter one live room, remain 20–30 seconds, then exit.
-4. Export `Documents/PlayURLLoggerV10_Objects.txt`.
+If the session remains WebRTC-only, the JSON remains `waiting`; that is a valid result.
 
-Do not publish raw logs before reviewing them.
+## PC
+Install FFmpeg and Python 3. Copy or otherwise sync `playback_info.json` from your own phone to the PC, then run:
+
+`python pc_recorder.py playback_info.json -o recording.mkv`
+
+The JSON may contain a temporary authorized playback URL. Keep it private and do not publish it.
+
+The first version intentionally does not implement phone-to-PC networking; it validates endpoint observation and recording first.
