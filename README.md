@@ -1,5 +1,7 @@
-# PlayURLLoggerV2
-Diagnostic logger for an iOS app you are authorized to inspect.
-Output: Documents/PlayURLLoggerV2.txt
-V2 logs candidate playback/signaling metadata visible through Foundation.
-It does not decrypt SRTP, bypass authentication/DRM, or export cookies/headers.
+# PlayURLLoggerV3
+For authorized app diagnostics. When a media URL is created through NSURL,
+V3 records the URL and a short symbolic call stack to identify the player/framework
+that handed the URL to Foundation. It does not decrypt media, bypass DRM/authentication,
+or collect cookies/authorization headers.
+
+Output: Documents/PlayURLLoggerV3.txt
