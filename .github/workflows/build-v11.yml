@@ -1,0 +1,25 @@
+name: Build V11 Endpoint Observer
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'V11EndpointObserver.m'
+      - '.github/workflows/build-v11.yml'
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          clang -arch arm64 -isysroot "$SDK" -miphoneos-version-min=14.0 \
+            -fobjc-arc -fblocks -dynamiclib -framework Foundation \
+            -install_name @rpath/V11EndpointObserver.dylib \
+            V11EndpointObserver.m -o V11EndpointObserver.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: V11EndpointObserver
+          path: V11EndpointObserver.dylib
