@@ -1,0 +1,38 @@
+name: Build PlayURLLoggerV7
+
+on:
+  push:
+    paths:
+      - 'PlayURLLoggerV7.m'
+      - '.github/workflows/build-v7.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build arm64 iOS dylib
+        shell: bash
+        run: |
+          set -euxo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          clang \
+            -arch arm64 \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=14.0 \
+            -fobjc-arc -fblocks \
+            -dynamiclib \
+            -framework Foundation \
+            -install_name @rpath/PlayURLLoggerV7.dylib \
+            PlayURLLoggerV7.m \
+            -o PlayURLLoggerV7.dylib
+          file PlayURLLoggerV7.dylib
+          ls -lh PlayURLLoggerV7.dylib
+
+      - name: Upload V7 dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlayURLLoggerV7
+          path: PlayURLLoggerV7.dylib
