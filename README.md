@@ -1,23 +1,20 @@
-# V11 Endpoint Observer + PC Recorder
+# V12 HWLLS Downgrade Inspector
 
-Purpose: observe a standard HLS / HTTP-FLV / RTMP endpoint that the app/SDK itself actually creates during its normal authorized playback/fallback path, write it to `Documents/playback_info.json`, then let a PC-side watcher hand that endpoint to FFmpeg.
+Focused diagnostic build after V11 observed no standard media endpoint.
 
-V11 does **not** synthesize an endpoint, alter authentication, force downgrade, or replay WebRTC/ICE credentials.
+It:
+- hooks the exact `HWLLSClient` / `HWLLSClientProxy` start path already confirmed in prior runtime work;
+- logs the relevant runtime method names/type encodings;
+- inspects only URL/downgrade/policy/domain/stream-related properties;
+- redacts complete URLs, query strings and obvious authorization values.
 
-## Phone
-Build `V11EndpointObserver.dylib` with GitHub Actions and inject only this observer for the test.
+It does **not** force downgrade, synthesize a URL, alter authentication, or change playback decisions.
 
-Files:
-- `Documents/playback_info.json`
-- `Documents/V11_EndpointObserver.log`
+## Test
+1. Build/inject V12.
+2. Start the app and enter one normally playable live stream.
+3. Let it play ~15 seconds.
+4. Exit the live stream normally.
+5. Retrieve `Documents/V12_HWLLS_DowngradeInspector.log`.
 
-If the session remains WebRTC-only, the JSON remains `waiting`; that is a valid result.
-
-## PC
-Install FFmpeg and Python 3. Copy or otherwise sync `playback_info.json` from your own phone to the PC, then run:
-
-`python pc_recorder.py playback_info.json -o recording.mkv`
-
-The JSON may contain a temporary authorized playback URL. Keep it private and do not publish it.
-
-The first version intentionally does not implement phone-to-PC networking; it validates endpoint observation and recording first.
+The method inventory is especially important: it tells us the exact selectors exposed by this particular HWLLSPlayer build, rather than assuming the public SDK version matches it.
