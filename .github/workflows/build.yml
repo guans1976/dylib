@@ -1,0 +1,34 @@
+name: Build PlayURLLogger
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build arm64 iOS dylib
+        run: |
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          xcrun --sdk iphoneos clang \
+            -arch arm64 \
+            -dynamiclib \
+            -fobjc-arc \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=14.0 \
+            -framework Foundation \
+            -install_name @rpath/PlayURLLogger.dylib \
+            PlayURLLogger.m \
+            -o PlayURLLogger.dylib
+          file PlayURLLogger.dylib
+
+      - name: Upload dylib
+        uses: actions/upload-artifact@v4
+        with:
+          name: PlayURLLogger
+          path: PlayURLLogger.dylib
+          
