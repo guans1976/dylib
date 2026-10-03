@@ -1,21 +1,20 @@
-# V9 Playback Decision Trace
-V9 uses the exact Objective-C ABIs observed in the V8 log.
+# V10 Object Inspector
 
-Focus:
-- `startPlay:startPlayOptions:` return value + options object
-- signaling request/result objects
-- `playNeedReplayWithErrorCode:` decision
-- `dealErrorCode:` input
-- downgrade YES/NO transitions
-- IJK/HLS/FLV/RTMP takeover
+Narrow diagnostic build based on the V9 trace.
 
-It does not alter decisions or force fallback.
+It inspects only objects already participating in the app's normal playback path:
+- HWLLSStartPlayOptions
+- RTCDnsResult
+- RTCSignalingSdpResp
 
-Test:
-1. Inject only V9.
+The inspector enumerates Objective-C properties on those objects and calls only zero-argument property getters. It logs scalar values plus NSString/NSNumber values. Complex objects are logged by class name only.
+
+Privacy filters omit/redact properties whose names suggest SDP, tokens, secrets, ICE credentials, fingerprints, candidates, IP/address/host data.
+
+## Test
+1. Inject only PlayURLLoggerV10.dylib.
 2. Launch and wait 10 seconds.
-3. Enter a live room for 20–30 seconds and exit.
-4. Export `Documents/PlayURLLoggerV9_Decision.txt`.
-5. A second test with an ordinary temporary network interruption can reveal the app's own recovery path; do not manipulate servers or authentication.
+3. Enter one live room, remain 20–30 seconds, then exit.
+4. Export `Documents/PlayURLLoggerV10_Objects.txt`.
 
-Review logs before sharing. Credential-like URL fields are redacted.
+Do not publish raw logs before reviewing them.
