@@ -1,4 +1,6 @@
-# V14 播放器路线观测版
+# V14.1 播放器路线观测版
+
+修复：协议分类辅助函数改名为 V14ProtocolLabel，消除与 Objective-C Protocol 类型的命名冲突。源码、工作流和 dylib 文件名继续使用 V14，直接覆盖原文件即可。
 
 基于 V13 的单文件 Objective-C dylib 与 GitHub Actions 构建方式，按原 IPA 的 ARM64 反汇编结果收窄观测位置。本版不强制降级、不更改地址、不绕过鉴权；作用是验证正常或失败播放时实际进入哪条播放器路径。
 

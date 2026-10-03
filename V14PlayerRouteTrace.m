@@ -23,7 +23,7 @@ static void Log(NSString *s) {
         } @catch (NSException *e) { /* Do not log exception payloads. */ }
     });
 }
-static NSString *Protocol(id value) {
+static NSString *V14ProtocolLabel(id value) {
     NSString *s = nil;
     if ([value isKindOfClass:NSString.class]) s = value;
     else if ([value isKindOfClass:NSURL.class]) s = [value absoluteString];
@@ -68,7 +68,7 @@ static BOOL Hook(const char *className, const char *selName, IMP replacement, IM
     return YES;
 }
 static int Play(id self, SEL cmd, id url) {
-    Log([NSString stringWithFormat:@"HUAWEI_START protocol=%@", Protocol(url)]);
+    Log([NSString stringWithFormat:@"HUAWEI_START protocol=%@", V14ProtocolLabel(url)]);
     int result = ((int (*)(id, SEL, id))oldPlay)(self, cmd, url);
     Log([NSString stringWithFormat:@"HUAWEI_START_RETURN code=%d", result]);
     return result;
@@ -86,7 +86,7 @@ static void IJKPrepare(id self, SEL cmd) {
         if (*BaseType(type) == '@') url = ((id (*)(id, SEL))objc_msgSend)(self, getter);
         free(type);
     }
-    Log([NSString stringWithFormat:@"IJK_PREPARE protocol=%@", Protocol(url)]);
+    Log([NSString stringWithFormat:@"IJK_PREPARE protocol=%@", V14ProtocolLabel(url)]);
     ((void (*)(id, SEL))oldIJK)(self, cmd);
     Log(@"IJK_PREPARE_RETURN");
 }
