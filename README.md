@@ -1,16 +1,15 @@
-# PlayURLLogger V5
+# PlayURLLogger V6 — Runtime Scout
 
-Diagnostic logger for an authorized iOS app test environment.
+Diagnostic build for discovering the actual runtime classes, selectors, and loaded images involved in the app's playback path.
 
-Logs to `Documents/PlayURLLoggerV5.txt`.
+## Output
+`Documents/PlayURLLoggerV6.txt`
 
-V5 observes:
-- NSURL creation (credentials redacted)
-- HWLLSPlayer `setStreamUrl:`
-- IJK player content URLs / fallback candidates
-- RTCPeerConnection remote/local SDP summaries
-- ICE candidate type/protocol summaries
-- WebRTC configuration changes
-- `[PC-CANDIDATE]` markers for HLS/FLV/RTMP URLs
+## What it records
+- Interesting loaded Mach-O images/frameworks
+- Runtime Objective-C classes whose names relate to WebRTC/HWLLS/player/signaling/SDP/ICE/IJK/FFmpeg/TRTC
+- Interesting instance/class selectors on those classes
+- NSURL strings, with common credentials redacted
+- Re-scans for 60 seconds and reacts to newly loaded images
 
-V5 intentionally does not dump reusable authorization headers, cookies, full ICE addresses, or SDP ICE credentials.
+V6 intentionally does not dump cookies, authorization headers, or reusable authentication secrets.
