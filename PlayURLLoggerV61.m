@@ -2,6 +2,7 @@
 #import <objc/runtime.h>
 #import <mach-o/dyld.h>
 #import <dlfcn.h>
+#include <unistd.h>
 
 static dispatch_queue_t gLogQ, gScanQ;
 static NSMutableSet *gSeenClasses, *gSeenImages;
@@ -77,7 +78,8 @@ static void ScanImages(void){
 }
 static void ScanClasses(void){
     int total=objc_getClassList(NULL,0); if(total<=0)return;
-    Class *cs=malloc(sizeof(Class)*(size_t)total); if(!cs)return;
+    __unsafe_unretained Class *cs =
+        (__unsafe_unretained Class *)calloc((size_t)total, sizeof(Class)); if(!cs)return;
     int got=objc_getClassList(cs,total); Log([NSString stringWithFormat:@"[CLASS COUNT] %d",got]);
     for(int i=0;i<got;i++){
         @autoreleasepool {
