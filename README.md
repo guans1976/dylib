@@ -1,11 +1,16 @@
-# PlayURLLoggerV4
-For authorized diagnostics of an app you are permitted to test.
+# PlayURLLogger V5
 
-V4 adds targeted observation of the playback entry points identified during static analysis:
-- `HWLLSPlayer setStreamUrl:`
-- `IJKFFMoviePlayerController` content URL initializers
-- `NSURL URLWithString:` (unfiltered, to expose signaling/API URLs as well as obvious media extensions)
+Diagnostic logger for an authorized iOS app test environment.
 
-Output: `Documents/PlayURLLoggerV4.txt`
+Logs to `Documents/PlayURLLoggerV5.txt`.
 
-V4 only records URL/argument descriptions and short symbolic call stacks. It does not bypass authentication/DRM or collect authorization headers/cookies.
+V5 observes:
+- NSURL creation (credentials redacted)
+- HWLLSPlayer `setStreamUrl:`
+- IJK player content URLs / fallback candidates
+- RTCPeerConnection remote/local SDP summaries
+- ICE candidate type/protocol summaries
+- WebRTC configuration changes
+- `[PC-CANDIDATE]` markers for HLS/FLV/RTMP URLs
+
+V5 intentionally does not dump reusable authorization headers, cookies, full ICE addresses, or SDP ICE credentials.
