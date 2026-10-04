@@ -1,12 +1,8 @@
 
-name: Build PaidPreviewV3.2 V20 Compare
+name: Build PaidPreviewV3.2.1 V20 Compare
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - "PaidPreviewV3_2_V20Compare.m"
-      - ".github/workflows/build.yml"
 
 jobs:
   build:
@@ -27,13 +23,13 @@ jobs:
             -fobjc-arc \
             -framework Foundation \
             -framework UIKit \
-            PaidPreviewV3_2_V20Compare.m \
-            -o PaidPreviewV3_2_V20Compare.dylib
-          file PaidPreviewV3_2_V20Compare.dylib
-          shasum -a 256 PaidPreviewV3_2_V20Compare.dylib
+            PaidPreviewV3_2_1_V20Compare.m \
+            -o PaidPreviewV3_2_1_V20Compare.dylib
+          file PaidPreviewV3_2_1_V20Compare.dylib
+          shasum -a 256 PaidPreviewV3_2_1_V20Compare.dylib
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PaidPreviewV3_2_V20Compare
-          path: PaidPreviewV3_2_V20Compare.dylib
+          name: PaidPreviewV3_2_1_V20Compare
+          path: PaidPreviewV3_2_1_V20Compare.dylib
