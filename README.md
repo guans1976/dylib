@@ -1,37 +1,40 @@
-# V16.1 Paid Playback Extension
+# V16.2 Paid Flow Trace
 
-基于原 `V16PlaybackExport.m` 扩展，原普通 V20 输出逻辑保留。
+目标：把“付费确认 -> 后台返回播放信息 -> RTCSignalingSender”的业务链按时间顺序抓清楚。
 
-## 行为
+## 只记录这些
+- qituoc.com 下 path 含 private / room / live / anchor / play / stream / preview 的请求
+- method / host / path / 是否带 query
+- HTTP status / mime / response bytes
+- JSON 顶层字段名和少量业务字段
+- 如果响应或字段里出现 URL，只保留 scheme/host/path，query 统一 `<redacted>`
+- 最终 RTCSignalingSender 收到的 streamUrl 也只记录去掉 query 的版本
 
-- 普通播放：仍然写 `Documents/playback_info.json`
-- 当检测到 App 发起 `/private/checkPrivateCharge` 后：
-  - 设置 120 秒的 `paidPending` 标记
-  - 如果随后 App 自己真正进入 `RTCSignalingSender +sendSignaling:`
-  - 同一份 `hwlls-playback-v16` 兼容记录会额外写入：
-    `Documents/paid_playback_info.json`
-- 不调用收费接口
-- 不伪造收费成功
-- 不修改 stream URL
-- 不生成 txSecret
-- 不阻止 App 原来的网络请求或播放流程
+## 明确不记录
+- Authorization / Cookie
+- token / secret / signature / sign / key
+- txSecret / txTime
+- X-Live-Butter 等自定义认证头
+- ICE pwd / DTLS fingerprint / 完整 SDP
+- 可重放的授权材料
 
-## 输出文件
+## 输出
+- `Documents/V16_2_PaidFlowTrace.log`
+- `Documents/v16_2_paid_flow_trace.json`
 
-- `playback_info.json`：原 V16/V20 路径
-- `paid_playback_info.json`：付费按钮之后、App 已实际进入 RTC signaling 时的镜像输出
-- `V16_1_PaidPlaybackExport.log`：诊断日志
+## 测试流程
+1. 启动 App
+2. 进入一个需要付费确认的房间
+3. 点击“付费观看”
+4. 等正式画面出来
+5. 再停留 10~20 秒
+6. 导出上面两个文件
 
-## 测试步骤
+重点看事件顺序：
+`http_request`
+→ `http_response` / `http_response_delegate`
+→ ...
+→ `rtc_handoff`
 
-1. 编译并注入 `V16_1PaidPlaybackExport.dylib`
-2. 启动 App
-3. 先测试一个普通频道，确认 `playback_info.json` 正常产生
-4. 再进入付费频道并正常点击“付费观看”
-5. 如果 App 正常进入正式 WebRTC，会产生 `paid_playback_info.json`
-6. 将它交给前面做的 V20.3 PC 扩展播放器
-
-日志中关键字：
-- `PAID_MARK`：检测到了 `checkPrivateCharge`
-- `SEND ... paidFresh=1`：收费标记后发生 RTC signaling
-- `PAID_EXPORT ready`：成功生成 PC 可读 JSON
+如果中间某个 response 从 opaque 变成了 JSON，或者某一步首次出现 `stream_url / streamurl / play_url`，
+基本就找到“签发/下发正式播放地址”的后台接口了。
