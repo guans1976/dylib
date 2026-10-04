@@ -1,5 +1,5 @@
 
-name: Build PaidPreviewV3.3 Active Path Trace
+name: Build PaidPreviewV3.4 V20 Diagnostic Exporter
 
 on:
   workflow_dispatch:
@@ -21,10 +21,10 @@ jobs:
             -dynamiclib \
             -fobjc-arc \
             -framework Foundation \
-            PaidPreviewV3_3_ActivePathTrace.m \
-            -o PaidPreviewV3_3_ActivePathTrace.dylib
-          file PaidPreviewV3_3_ActivePathTrace.dylib
+            PaidPreviewV3_4_V20DiagnosticExporter.m \
+            -o PaidPreviewV3_4_V20DiagnosticExporter.dylib
+          file PaidPreviewV3_4_V20DiagnosticExporter.dylib
       - uses: actions/upload-artifact@v4
         with:
-          name: PaidPreviewV3_3_ActivePathTrace
-          path: PaidPreviewV3_3_ActivePathTrace.dylib
+          name: PaidPreviewV3_4_V20DiagnosticExporter
+          path: PaidPreviewV3_4_V20DiagnosticExporter.dylib
