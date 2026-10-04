@@ -1,30 +1,37 @@
-# V3.5 Channel Info Trace
+# V16.1 Paid Playback Extension
 
-静态分析确认：
-- App 内使用 Alamofire。
-- 主程序包含 `/private/previewPrivateRoom`。
-- 主程序包含 `room_id`、`preview_time` 等字段字符串。
+基于原 `V16PlaybackExport.m` 扩展，原普通 V20 输出逻辑保留。
 
-本版用途：
-- 记录发往 `qituoc.com` 的请求 URL、method、非敏感 headers、JSON body。
-- 记录服务器返回的 JSON 响应。
-- 同时兼容 NSURLSession completion-handler 路径和 Alamofire delegate 路径。
-- 自动脱敏 token / secret / signature / cookie / authorization / password / userSig / txSecret / session/device/contact 等字段。
-- 单个 response 最多缓存 2 MB。
+## 行为
 
-输出：
-- `Documents/PaidPreviewV3_5_ChannelInfoTrace.log`
-- `Documents/preview_v3_5_channel_info.json`
+- 普通播放：仍然写 `Documents/playback_info.json`
+- 当检测到 App 发起 `/private/checkPrivateCharge` 后：
+  - 设置 120 秒的 `paidPending` 标记
+  - 如果随后 App 自己真正进入 `RTCSignalingSender +sendSignaling:`
+  - 同一份 `hwlls-playback-v16` 兼容记录会额外写入：
+    `Documents/paid_playback_info.json`
+- 不调用收费接口
+- 不伪造收费成功
+- 不修改 stream URL
+- 不生成 txSecret
+- 不阻止 App 原来的网络请求或播放流程
 
-测试建议：
-1. 启动 App。
-2. 打开频道列表并上下滚动，让频道数据加载完整。
-3. 分别点击几个免费/普通/收费频道。
-4. 对收费频道触发一次正常预览。
-5. 导出 log 和 json。
+## 输出文件
 
-目标不是绕过付费，而是确认：
-- 频道列表接口是什么；
-- 每个频道服务端返回了哪些字段；
-- `/private/previewPrivateRoom` 的真实 request body / response schema；
-- 哪个业务字段与 preview FLV / WebRTC stream name 对应。
+- `playback_info.json`：原 V16/V20 路径
+- `paid_playback_info.json`：付费按钮之后、App 已实际进入 RTC signaling 时的镜像输出
+- `V16_1_PaidPlaybackExport.log`：诊断日志
+
+## 测试步骤
+
+1. 编译并注入 `V16_1PaidPlaybackExport.dylib`
+2. 启动 App
+3. 先测试一个普通频道，确认 `playback_info.json` 正常产生
+4. 再进入付费频道并正常点击“付费观看”
+5. 如果 App 正常进入正式 WebRTC，会产生 `paid_playback_info.json`
+6. 将它交给前面做的 V20.3 PC 扩展播放器
+
+日志中关键字：
+- `PAID_MARK`：检测到了 `checkPrivateCharge`
+- `SEND ... paidFresh=1`：收费标记后发生 RTC signaling
+- `PAID_EXPORT ready`：成功生成 PC 可读 JSON
