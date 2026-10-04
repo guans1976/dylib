@@ -1,20 +1,17 @@
-# PaidPreview V2 Trace
+# PaidPreview V3 Native Trace
 
-目标：尽可能观察收费预览 HTTP-FLV 从 IJK 初始化到 Foundation 网络层的请求结构，用于分析 PC 裸请求为何返回 409/502。
+基于 V20 的方法论：不猜 PC 参数，先寻找 IJK/FFmpeg 最靠近实际媒体打开的位置。
+
+本版：
+- 展开 `IJKFFMoviePlayerController ...withOptions:` 的 options 对象；
+- 记录 IJK URL-open 对象的可读属性；
+- 枚举运行时中 IJK / FFmpeg / FFIO / URL-open 相关 Objective-C 类和方法，重点列出 url/options/header/open/http/format；
+- 修复 V2 JSON 一直显示 waiting 的问题。
 
 输出：
-- `Documents/PaidPreviewV2Trace.log`
-- `Documents/preview_trace.json`
+- `Documents/PaidPreviewV3NativeTrace.log`
+- `Documents/preview_v3_trace.json`
 
-抓取：
-- IJK initializer / `IJKMediaUrlOpenData setUrl:`
-- NSURLSession request method、普通 headers、HTTP body 长度
-- NSURLConnection 请求（若使用）
-- 事件顺序与时间
+认证类字段不会写原始值，只保留存在性/长度。插件不修改请求和播放状态。
 
-隐私/安全：
-- `/preview/` 的不透明路径在 trace/log 中脱敏。
-- Cookie、Authorization、token、secret、signature、session、device、credential、fingerprint 等值不落盘，只记录长度和 SHA-256 前 8 字节摘要。
-- 不修改请求、不强制播放、不延长试看、不重放认证材料。
-
-使用：注入 dylib，重新进入一次收费预览并正常播放约 10–20 秒，然后导出两个文件给我分析。
+测试：注入后打开收费预览并正常播放约 15 秒，再退出。把两个输出文件发回分析。
