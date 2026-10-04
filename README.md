@@ -1,32 +1,26 @@
 
-# PaidPreview V3.2 — V20 Compare Trace
+# PaidPreview V3.2.1 — Log Fix
 
-目标：只做“通道对照”，不修改播放逻辑，不延长预览，不伪造授权。
+修正点：
+- 不再写死 `/var/mobile/Documents`
+- 自动使用 App 自己的 `Documents`
+- Documents 不可写时自动回退到 `NSTemporaryDirectory()`
+- 同时输出 `NSLog + stderr`
+- 所有文件创建/写入失败都会打印错误
+- JSON 内写入实际 log/json 路径
+- GitHub Actions 改为仅手动触发，避免上传文件时连续编译
 
-本版同时保留 V3.1 的 IJK/HTTP-FLV 观察点，并增加：
-- NSURLSession 请求 URL 的 host/path 级观察（query 自动脱敏）
-- 运行时枚举 `HWLLS` / `HLLL` / `WebRTC` / `RTC` / `IJK` 相关类与方法
-- 自动分类：
-  - `preview_http_flv_only`
-  - `v20_webrtc_like`
-  - `dual_path_evidence`
-  - `unknown`
+正常情况下输出位于 App 沙盒：
+- `Documents/PaidPreviewV3_2_1_V20Compare.log`
+- `Documents/preview_v3_2_1_compare.json`
 
-输出：
-- `/var/mobile/Documents/PaidPreviewV3_2_V20Compare.log`
-- `/var/mobile/Documents/preview_v3_2_compare.json`
+如果 Documents 不可写，则在 App tmp 目录：
+- `tmp/PaidPreviewV3_2_1_V20Compare.log`
+- `tmp/preview_v3_2_1_compare.json`
 
-## GitHub Actions
-把整个目录上传到 GitHub 仓库，Actions -> `Build PaidPreviewV3.2 V20 Compare` -> Run workflow。
-产物：`PaidPreviewV3_2_V20Compare.dylib`
-
-## 运行测试建议
-1. 注入 dylib 后启动 App。
-2. 进入收费预览页并播放至少 20~30 秒。
-3. 不要切到其它直播，避免日志混杂。
-4. 导出上面两个文件。
-5. PC 端：
-   `python pc/compare_trace.py analyze preview_v3_2_compare.json`
-
-## 这版重点
-不是绕过“一分钟”，而是确认预览页是否还同时存在 V20 的 WebRTC/HWLLS 证据。
+测试：
+1. 编译并注入。
+2. 只要启动 App，哪怕还没播放，也应该立即产生 log。
+3. log 首行应包含：
+   `PaidPreviewV3.2.1 V20 Compare Trace active`
+4. 如果没有文件，查看设备控制台，搜索 `[V3.2.1]`，会显示实际路径或写入错误。
