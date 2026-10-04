@@ -1,9 +1,12 @@
-name: Build PlayURLLogger
+
+name: Build PaidPreviewV3.2 V20 Compare
 
 on:
   workflow_dispatch:
   push:
-    branches: [ main, master ]
+    paths:
+      - "PaidPreviewV3_2_V20Compare.m"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
@@ -11,24 +14,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build arm64 iOS dylib
+      - name: Build
+        shell: bash
         run: |
+          set -euxo pipefail
           SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
           xcrun --sdk iphoneos clang \
             -arch arm64 \
+            -isysroot "$SDK" \
+            -miphoneos-version-min=15.0 \
             -dynamiclib \
             -fobjc-arc \
-            -isysroot "$SDK" \
-            -miphoneos-version-min=14.0 \
             -framework Foundation \
-            -install_name @rpath/PlayURLLogger.dylib \
-            PlayURLLogger.m \
-            -o PlayURLLogger.dylib
-          file PlayURLLogger.dylib
+            -framework UIKit \
+            PaidPreviewV3_2_V20Compare.m \
+            -o PaidPreviewV3_2_V20Compare.dylib
+          file PaidPreviewV3_2_V20Compare.dylib
+          shasum -a 256 PaidPreviewV3_2_V20Compare.dylib
 
-      - name: Upload dylib
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PlayURLLogger
-          path: PlayURLLogger.dylib
-          
+          name: PaidPreviewV3_2_V20Compare
+          path: PaidPreviewV3_2_V20Compare.dylib
