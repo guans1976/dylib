@@ -288,7 +288,7 @@ static BOOL HookInstance(Class c,SEL s,IMP repl,IMP *orig){
 }
 static BOOL HookClassMethod(Class c,SEL s,IMP repl,IMP *orig){
     if(!c)return NO; Class meta=object_getClass(c); Method m=class_getInstanceMethod(meta,s); if(!m)return NO;
-    if(orig)*orig=method_getImplementation(m); method_setImplementation(meta,s,repl);
+    if(orig)*orig=method_getImplementation(m); method_setImplementation(m,repl);
     Event(@"hook",@{@"class":[@"+" stringByAppendingString:NSStringFromClass(c)],@"selector":NSStringFromSelector(s)}); return YES;
 }
 static void InstallRTC(unsigned attempt){
@@ -296,7 +296,7 @@ static void InstallRTC(unsigned attempt){
     SEL sel=NSSelectorFromString(@"sendSignaling:"); Method m=meta?class_getInstanceMethod(meta,sel):NULL;
     if(!m){ if(attempt<30)dispatch_after(dispatch_time(DISPATCH_TIME_NOW,NSEC_PER_SEC),dispatch_get_main_queue(),^{InstallRTC(attempt+1);});
         else Event(@"rtc_hook_missing",@{}); return; }
-    gOrigSend=method_getImplementation(m); method_setImplementation(meta,sel,(IMP)HookSend); gRTCInstalled=YES;
+    gOrigSend=method_getImplementation(m); method_setImplementation(m,(IMP)HookSend); gRTCInstalled=YES;
     Event(@"hook",@{@"class":@"RTCSignalingSender",@"selector":@"+sendSignaling:"});
 }
 
