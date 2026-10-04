@@ -1,27 +1,20 @@
-# Paid Preview V1
+# PaidPreview V2 Trace
 
-这是一套只用于“收费页当前授权试看流”的独立测试链，不改普通直播 V16/V20。
+目标：尽可能观察收费预览 HTTP-FLV 从 IJK 初始化到 Foundation 网络层的请求结构，用于分析 PC 裸请求为何返回 409/502。
 
-## 手机插件
-`PaidPreviewV1.m` 只观察 IJK：
-- `IJKFFMoviePlayerController initWithContentURL...`
-- `IJKMediaUrlOpenData setUrl:`
+输出：
+- `Documents/PaidPreviewV2Trace.log`
+- `Documents/preview_trace.json`
 
-仅当 URL 是 `api.qituoc.com/preview/.../*.flv` 时写入：
-`Documents/preview_playback.json`
+抓取：
+- IJK initializer / `IJKMediaUrlOpenData setUrl:`
+- NSURLSession request method、普通 headers、HTTP body 长度
+- NSURLConnection 请求（若使用）
+- 事件顺序与时间
 
-日志 `PaidPreviewV1.log` 只记录脱敏后的 URL 形状；JSON 为了让电脑端测试播放，会保存 App 当前实际收到的完整试看 URL。
-插件不会构造 URL、刷新 URL、修改试看时长或改变付费状态。
+隐私/安全：
+- `/preview/` 的不透明路径在 trace/log 中脱敏。
+- Cookie、Authorization、token、secret、signature、session、device、credential、fingerprint 等值不落盘，只记录长度和 SHA-256 前 8 字节摘要。
+- 不修改请求、不强制播放、不延长试看、不重放认证材料。
 
-## GitHub Actions
-把 `PaidPreviewV1.m` 和 `.github/workflows/build-paid-preview-v1.yml` 放入仓库后运行 workflow，下载 `PaidPreviewV1.dylib`。
-
-## 电脑端
-1. 安装 FFmpeg，并确保命令行可执行 `ffmpeg` 和 `ffplay`。
-2. 手机进入收费页并开始正常试看。
-3. 导出最新 `preview_playback.json` 到 `PC` 文件夹。
-4. 双击 `start_windows.bat`。
-5. 浏览器会打开 `http://127.0.0.1:8766`。
-6. 点“开始播放并录制”。
-
-播放器只使用 JSON 中当前授权的 HTTP-FLV 地址；不会刷新、推导或延长该地址。地址过期后请回到 App 正常重新进入试看并重新导出 JSON。
+使用：注入 dylib，重新进入一次收费预览并正常播放约 10–20 秒，然后导出两个文件给我分析。
