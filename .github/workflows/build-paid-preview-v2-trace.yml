@@ -1,0 +1,16 @@
+name: Build PaidPreviewV2Trace
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          xcrun --sdk iphoneos clang -arch arm64 -dynamiclib -fobjc-arc \
+            -framework Foundation -framework Security -lcommonCrypto \
+            -miphoneos-version-min=12.0 PaidPreviewV2Trace.m -o PaidPreviewV2Trace.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaidPreviewV2Trace
+          path: PaidPreviewV2Trace.dylib
