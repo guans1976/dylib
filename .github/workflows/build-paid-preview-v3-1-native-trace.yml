@@ -1,0 +1,17 @@
+name: Build PaidPreviewV3_1NativeTrace
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          xcrun --sdk iphoneos clang -arch arm64 -dynamiclib -fobjc-arc \
+            -framework Foundation -miphoneos-version-min=12.0 \
+            PaidPreviewV3_1NativeTrace.m -o PaidPreviewV3_1NativeTrace.dylib
+          file PaidPreviewV3_1NativeTrace.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PaidPreviewV3_1NativeTrace
+          path: PaidPreviewV3_1NativeTrace.dylib
