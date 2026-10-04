@@ -1,5 +1,5 @@
 
-name: Build PaidPreviewV3.4.1 V20 Diagnostic Exporter
+name: Build PaidPreviewV3.5 Channel Info Trace
 
 on:
   workflow_dispatch:
@@ -21,10 +21,10 @@ jobs:
             -dynamiclib \
             -fobjc-arc \
             -framework Foundation \
-            PaidPreviewV3_4_1_V20DiagnosticExporter.m \
-            -o PaidPreviewV3_4_1_V20DiagnosticExporter.dylib
-          file PaidPreviewV3_4_1_V20DiagnosticExporter.dylib
+            PaidPreviewV3_5_ChannelInfoTrace.m \
+            -o PaidPreviewV3_5_ChannelInfoTrace.dylib
+          file PaidPreviewV3_5_ChannelInfoTrace.dylib
       - uses: actions/upload-artifact@v4
         with:
-          name: PaidPreviewV3_4_1_V20DiagnosticExporter
-          path: PaidPreviewV3_4_1_V20DiagnosticExporter.dylib
+          name: PaidPreviewV3_5_ChannelInfoTrace
+          path: PaidPreviewV3_5_ChannelInfoTrace.dylib
