@@ -8,7 +8,7 @@ jobs:
       - name: Build
         run: |
           xcrun --sdk iphoneos clang -arch arm64 -dynamiclib -fobjc-arc \
-            -framework Foundation -framework Security -lcommonCrypto \
+            -framework Foundation \
             -miphoneos-version-min=12.0 PaidPreviewV2Trace.m -o PaidPreviewV2Trace.dylib
       - uses: actions/upload-artifact@v4
         with:
