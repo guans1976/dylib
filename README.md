@@ -1,65 +1,47 @@
-# V16.4 GetPrivateLimit Flow Trace
+# V16.5 Decode Feasibility Probe
 
-这是干净版，只追踪 `getPrivateLimit` 到正式 HWLLS / WebRTC 播放的链路。
+这版的目的不是导出密钥，而是判断“PC 端复现解码是否值得继续”。
 
-## 目标
+## 它做什么
 
-确认：
+每次正常调用 `getPrivateLimit` 时记录：
 
-`/OpenAPI/v1/private/getPrivateLimit`
-→ 请求需要哪些参数名
-→ App 在哪个函数把响应解码成带 `stream` 的对象
-→ `HWLLSClientProxy startPlay`
-→ `RTCSignalingSender`
+- 原始 opaque response 大小
+- 原始 response 的 SHA-256 前 16 位
+- App 内部出现 `stream` 对象时对应 JSON Data 大小
+- 解码后 JSON 的 SHA-256 前 16 位
+- 从 response 到 decoded stream 的耗时
+- `flv_pull_url / lll_pull_url / pull_url` 的去-query版本
+- 最终 RTC handoff
 
-## 输出
+这样连续测 3~5 次，就能判断：
 
-- `Documents/V16_4_GetPrivateLimitFlowTrace.log`
-- `Documents/v16_4_get_private_limit_flow.json`
+1. 原始响应是否每次都变化；
+2. 解码路径是否稳定；
+3. 同一个 App 版本是否始终在同一调用栈上完成解码；
+4. `stream` 对象是否每次都稳定产出；
+5. PC 端如果实现同样的业务解包，是否有明确输入/输出边界。
 
-## 记录内容
+## 它不做什么
 
-### 请求
-仅记录：
-- method / host / path
-- query 参数名
-- 每个非敏感参数是否存在、长度、是否纯数字
-- header 名以及是否存在/长度
+不会导出：
 
-不会记录可复用的 query 值或认证头值。
-
-### 响应
-记录：
-- HTTP status / mime
-- body 大小
-- JSON 解码后的 key 结构
-- `stream` 对象包含哪些字段
-- URL 只保留 scheme/host/path，query 一律 `<redacted>`
-- App 调用栈
-
-### 播放
-记录：
-- `HWLLSClientProxy startPlay:startPlayOptions:` 调用时机和调用栈
-- `RTCSignalingSender +sendSignaling:` 调用时机
-- 与 getPrivateLimit response / decode 的毫秒级时间差
-
-## 不记录
-
+- AES key / IV
 - Authorization / Cookie
-- token / secret / signature
 - txSecret / txTime
-- X-Live-Butter / knockknock
-- ICE pwd / fingerprint / 完整 SDP
-- 可重放认证材料
+- 完整播放签名
+- 任何可重放认证材料
 
-## 测试
+## 测试方法
 
-普通频道优先：
+建议连续进入普通频道 3~5 次，或在多个普通频道之间切换，每次等画面出来后停 5~10 秒。
 
-1. 冷启动 App
-2. 点一个普通频道
-3. 等正式画面出来
-4. 停留 10~15 秒
-5. 导出两个文件
+导出：
 
-如果普通频道有多次自动刷新，也可以多停留一会儿，这样能看清 `getPrivateLimit` 是否会周期性签发新地址。
+- `Documents/V16_5_DecodeFeasibilityProbe.log`
+- `Documents/v16_5_decode_feasibility_probe.json`
+
+如果每次都有：
+`limit_raw_response -> decoded_stream_sample -> rtc_handoff`
+
+并且调用栈稳定，就说明 PC 复现这条链在工程上是可行方向。
