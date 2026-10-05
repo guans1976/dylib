@@ -1,40 +1,65 @@
-# V16.2 Paid Flow Trace
+# V16.4 GetPrivateLimit Flow Trace
 
-目标：把“付费确认 -> 后台返回播放信息 -> RTCSignalingSender”的业务链按时间顺序抓清楚。
+这是干净版，只追踪 `getPrivateLimit` 到正式 HWLLS / WebRTC 播放的链路。
 
-## 只记录这些
-- qituoc.com 下 path 含 private / room / live / anchor / play / stream / preview 的请求
-- method / host / path / 是否带 query
-- HTTP status / mime / response bytes
-- JSON 顶层字段名和少量业务字段
-- 如果响应或字段里出现 URL，只保留 scheme/host/path，query 统一 `<redacted>`
-- 最终 RTCSignalingSender 收到的 streamUrl 也只记录去掉 query 的版本
+## 目标
 
-## 明确不记录
-- Authorization / Cookie
-- token / secret / signature / sign / key
-- txSecret / txTime
-- X-Live-Butter 等自定义认证头
-- ICE pwd / DTLS fingerprint / 完整 SDP
-- 可重放的授权材料
+确认：
+
+`/OpenAPI/v1/private/getPrivateLimit`
+→ 请求需要哪些参数名
+→ App 在哪个函数把响应解码成带 `stream` 的对象
+→ `HWLLSClientProxy startPlay`
+→ `RTCSignalingSender`
 
 ## 输出
-- `Documents/V16_2_PaidFlowTrace.log`
-- `Documents/v16_2_paid_flow_trace.json`
 
-## 测试流程
-1. 启动 App
-2. 进入一个需要付费确认的房间
-3. 点击“付费观看”
-4. 等正式画面出来
-5. 再停留 10~20 秒
-6. 导出上面两个文件
+- `Documents/V16_4_GetPrivateLimitFlowTrace.log`
+- `Documents/v16_4_get_private_limit_flow.json`
 
-重点看事件顺序：
-`http_request`
-→ `http_response` / `http_response_delegate`
-→ ...
-→ `rtc_handoff`
+## 记录内容
 
-如果中间某个 response 从 opaque 变成了 JSON，或者某一步首次出现 `stream_url / streamurl / play_url`，
-基本就找到“签发/下发正式播放地址”的后台接口了。
+### 请求
+仅记录：
+- method / host / path
+- query 参数名
+- 每个非敏感参数是否存在、长度、是否纯数字
+- header 名以及是否存在/长度
+
+不会记录可复用的 query 值或认证头值。
+
+### 响应
+记录：
+- HTTP status / mime
+- body 大小
+- JSON 解码后的 key 结构
+- `stream` 对象包含哪些字段
+- URL 只保留 scheme/host/path，query 一律 `<redacted>`
+- App 调用栈
+
+### 播放
+记录：
+- `HWLLSClientProxy startPlay:startPlayOptions:` 调用时机和调用栈
+- `RTCSignalingSender +sendSignaling:` 调用时机
+- 与 getPrivateLimit response / decode 的毫秒级时间差
+
+## 不记录
+
+- Authorization / Cookie
+- token / secret / signature
+- txSecret / txTime
+- X-Live-Butter / knockknock
+- ICE pwd / fingerprint / 完整 SDP
+- 可重放认证材料
+
+## 测试
+
+普通频道优先：
+
+1. 冷启动 App
+2. 点一个普通频道
+3. 等正式画面出来
+4. 停留 10~15 秒
+5. 导出两个文件
+
+如果普通频道有多次自动刷新，也可以多停留一会儿，这样能看清 `getPrivateLimit` 是否会周期性签发新地址。
