@@ -1,16 +1,58 @@
-# V16.1 Broker
+# V16 Request Construction Trace
 
-这是 V16.1 的 Broker 测试版。
+用途：观察 App 在真正发出请求之前，如何构造 `NSMutableURLRequest`。
 
-功能：
-- 保留原来的 `playback_info.json` / `paid_playback_info.json` 导出；
-- 捕获 App 正常调用 `getPrivateLimit` 时的 `uid` 作为 `channel_id` 元数据；
-- 当 App **正常进入 RTC signaling** 时，把最新合法 playback JSON 放入 Broker cache；
-- 在手机前台启动本地 HTTP Broker：`0.0.0.0:8766`；
-- `GET /health` 查看状态；
-- `POST /refresh` 让 PC 取得当前最新、尚未过期的授权 playback JSON。
+重点关注：
+- `/OpenAPI/v1/anchor/all`
+- `/OpenAPI/v1/private/getPrivateLimit`
+- `api.qituoc.com`
 
-它不会伪造签名，也不会复用/导出 Authorization、Cookie 或 App 私有认证头。
+Hook：
+- `setValue:forHTTPHeaderField:`
+- `addValue:forHTTPHeaderField:`
+- `setAllHTTPHeaderFields:`
+- `setHTTPBody:`
+- `setURL:`
+- `setHTTPMethod:`
 
-重要：这个测试版的 `/refresh` 只能返回 App 已经正常取得的最新播放信息。
-如果缓存已经过期，它会要求 App 先正常取得一个新的播放会话；它不会私自重放认证请求。
+输出：
+
+`Documents/V16_RequestConstructionTrace.log`
+
+每条记录包含：
+- method
+- URL
+- body 长度
+- body SHA-256
+- header 名称
+- 普通 header 值
+- Authorization / Cookie / X-Live-Butter2 只记录长度，不记录实际值
+- 调用栈
+
+## 目的
+
+用来判断：
+- `X-Live-Butter2` 在哪一层写入
+- 是否有其它 header 在发出前被动态补入
+- body 是否在最后阶段被替换
+- 哪些 App 函数参与构造 `/anchor/all`
+
+## 边界
+
+这个版本不会：
+- 导出 Bearer/Cookie/Butter2 明文
+- 生成或伪造认证字段
+- 绕过收费/权限
+- 修改请求结果
+
+它只是观察请求构造过程。
+
+## 建议测试步骤
+
+1. 注入后冷启动 App
+2. 正常登录
+3. 打开频道列表一次
+4. 点进一个普通频道一次
+5. 导出 `Documents/V16_RequestConstructionTrace.log`
+6. 把日志发回来分析
+
