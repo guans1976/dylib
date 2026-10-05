@@ -279,7 +279,7 @@ static void HandleClient(int fd) {
                 NSInteger x=0; [sc scanInteger:&x]; if(x>0) need=(NSUInteger)x;
             }
             NSRange sep=[s rangeOfString:@"\r\n\r\n"];
-            NSUInteger have=[s substringFromIndex:sep.location+sep.length].lengthOfBytesUsingEncoding:NSUTF8StringEncoding;
+            NSUInteger have=[[s substringFromIndex:sep.location+sep.length] lengthOfBytesUsingEncoding:NSUTF8StringEncoding];
             if(have>=need) break;
         }
     }
