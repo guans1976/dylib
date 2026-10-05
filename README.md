@@ -1,58 +1,62 @@
-# V16 Request Construction Trace
+# V16 Final Request Trace
 
-用途：观察 App 在真正发出请求之前，如何构造 `NSMutableURLRequest`。
+这是“最终请求快照”版，不再观察 `NSMutableURLRequest` 的中间构造过程，而是钩在 `NSURLSession` 即将创建 task / task resume 的位置。
 
-重点关注：
-- `/OpenAPI/v1/anchor/all`
-- `/OpenAPI/v1/private/getPrivateLimit`
-- `api.qituoc.com`
+## 观察位置
 
-Hook：
-- `setValue:forHTTPHeaderField:`
-- `addValue:forHTTPHeaderField:`
-- `setAllHTTPHeaderFields:`
-- `setHTTPBody:`
-- `setURL:`
-- `setHTTPMethod:`
+- `NSURLSession dataTaskWithRequest:`
+- `NSURLSession dataTaskWithRequest:completionHandler:`
+- `NSURLSession uploadTaskWithRequest:fromData:`
+- `NSURLSession uploadTaskWithRequest:fromData:completionHandler:`
+- `NSURLSessionTask resume`
 
-输出：
+## 输出
 
-`Documents/V16_RequestConstructionTrace.log`
+`Documents/V16_FinalRequestTrace.log`
 
-每条记录包含：
-- method
-- URL
-- body 长度
-- body SHA-256
-- header 名称
-- 普通 header 值
-- Authorization / Cookie / X-Live-Butter2 只记录长度，不记录实际值
+重点记录：
+
+- 最终 URL / query
+- HTTP method
+- 最终 header 列表
+- HTTPBody 长度 + SHA256
+- HTTPBodyStream 是否存在
 - 调用栈
+- 当前线程
 
-## 目的
+敏感字段不会记录明文：
 
-用来判断：
-- `X-Live-Butter2` 在哪一层写入
-- 是否有其它 header 在发出前被动态补入
-- body 是否在最后阶段被替换
-- 哪些 App 函数参与构造 `/anchor/all`
+- Authorization
+- Cookie
+- X-Live-Butter2
 
-## 边界
+它们只记录：
 
-这个版本不会：
-- 导出 Bearer/Cookie/Butter2 明文
-- 生成或伪造认证字段
-- 绕过收费/权限
-- 修改请求结果
+- 长度
+- SHA256
 
-它只是观察请求构造过程。
+这样可以比较“手机成功请求”和“PC 请求”结构是否一致，而不导出可复用认证值。
 
-## 建议测试步骤
+## 推荐操作
 
-1. 注入后冷启动 App
-2. 正常登录
-3. 打开频道列表一次
-4. 点进一个普通频道一次
-5. 导出 `Documents/V16_RequestConstructionTrace.log`
-6. 把日志发回来分析
+1. 注入后冷启动 App。
+2. 正常进入首页，让 `/anchor/all` 成功一次。
+3. 点一个普通频道一次。
+4. 如需要，再进入一次会触发 `/private/getPrivateLimit` 的页面。
+5. 导出：
 
+`Documents/V16_FinalRequestTrace.log`
+
+发回日志即可继续分析。
+
+## GitHub 编译
+
+上传本目录全部文件到仓库根目录后：
+
+`Actions -> Build V16 Final Request Trace -> Run workflow`
+
+下载：
+
+`V16FinalRequestTrace-rootless-deb`
+
+如果你的 RootHide Patcher 对 rootless `.deb` 仍报错，把转换页面的具体错误行发回来；不要只给 `error 256`。

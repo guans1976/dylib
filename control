@@ -1,9 +1,8 @@
-Package: com.stone.v16requestconstructiontrace
-Name: V16 Request Construction Trace
+Package: com.stone.v16finalrequesttrace
+Name: V16 Final Request Trace
 Version: 1.0.0
-Architecture: iphoneos-arm
-Description: Diagnostic request-construction trace for com.LiveAudience
+Architecture: iphoneos-arm64
+Description: Final NSURLSession request diagnostics for com.LiveAudience
 Maintainer: local
 Author: local
 Section: Tweaks
-Depends: mobilesubstrate
