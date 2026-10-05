@@ -1,0 +1,20 @@
+name: Build V16.4 GetPrivateLimit Flow Trace
+on: [workflow_dispatch]
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build arm64 dylib
+        run: |
+          set -euxo pipefail
+          SDK="$(xcrun --sdk iphoneos --show-sdk-path)"
+          clang -arch arm64 -isysroot "$SDK" -miphoneos-version-min=14.0 \
+            -fobjc-arc -fblocks -Wall -Wextra -Werror -Wno-unused-parameter \
+            -dynamiclib -framework Foundation \
+            -install_name @rpath/V16_4GetPrivateLimitFlowTrace.dylib \
+            V16_4GetPrivateLimitFlowTrace.m -o V16_4GetPrivateLimitFlowTrace.dylib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: V16_4GetPrivateLimitFlowTrace
+          path: V16_4GetPrivateLimitFlowTrace.dylib
