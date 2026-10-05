@@ -1,0 +1,54 @@
+name: Build V16 Request Construction Trace
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "V16RequestConstructionTrace.m"
+      - "V16RequestConstructionTrace.plist"
+      - "Makefile"
+      - "control"
+      - ".github/workflows/build-v16-request-trace.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install ldid dpkg make
+
+      - name: Install Theos
+        run: |
+          git clone --recursive https://github.com/theos/theos.git "$HOME/theos"
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
+
+      - name: Build package
+        run: |
+          export THEOS="$HOME/theos"
+          make clean
+          make package FINALPACKAGE=1
+
+      - name: Show packages
+        run: |
+          find packages -maxdepth 1 -type f -print || true
+
+      - name: Upload DEB
+        uses: actions/upload-artifact@v4
+        with:
+          name: V16RequestConstructionTrace-deb
+          path: packages/*.deb
+          if-no-files-found: error
+
+      - name: Upload dylib bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: V16RequestConstructionTrace-build
+          path: |
+            .theos/obj/debug/*.dylib
+            .theos/obj/*.dylib
+          if-no-files-found: ignore
