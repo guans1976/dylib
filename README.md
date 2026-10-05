@@ -1,47 +1,48 @@
-# V16.5 Decode Feasibility Probe
+# V16.6 Decode Boundary Probe
 
-这版的目的不是导出密钥，而是判断“PC 端复现解码是否值得继续”。
+目标：确认 `getPrivateLimit` 原始响应到 JSON 之间的边界是否稳定。
 
-## 它做什么
+## 记录的边界
 
-每次正常调用 `getPrivateLimit` 时记录：
+- `boundary_raw_response`
+  - 原始 opaque response 大小 + SHA256 前16位
+- `boundary_base64_string`
+  - 如果 App 走 `NSData initWithBase64EncodedString:options:`，记录输入长度和输出长度/指纹
+- `boundary_base64_data`
+  - 如果 App 走 `NSData initWithBase64EncodedData:options:`，记录输入/输出长度和指纹
+- `boundary_json_output`
+  - 出现带 `stream` 的 JSON 时，记录 JSON Data 大小/指纹和调用栈
+- `boundary_rtc_handoff`
+  - 最终正式 WebRTC 交接
 
-- 原始 opaque response 大小
-- 原始 response 的 SHA-256 前 16 位
-- App 内部出现 `stream` 对象时对应 JSON Data 大小
-- 解码后 JSON 的 SHA-256 前 16 位
-- 从 response 到 decoded stream 的耗时
-- `flv_pull_url / lll_pull_url / pull_url` 的去-query版本
-- 最终 RTC handoff
+## 重要说明
 
-这样连续测 3~5 次，就能判断：
+这版只记录：
+- 长度
+- SHA256 前16位
+- 调用栈
+- 去掉 query 的播放 URL
 
-1. 原始响应是否每次都变化；
-2. 解码路径是否稳定；
-3. 同一个 App 版本是否始终在同一调用栈上完成解码；
-4. `stream` 对象是否每次都稳定产出；
-5. PC 端如果实现同样的业务解包，是否有明确输入/输出边界。
-
-## 它不做什么
-
-不会导出：
-
-- AES key / IV
+不会记录：
+- AES key
+- IV
 - Authorization / Cookie
 - txSecret / txTime
-- 完整播放签名
-- 任何可重放认证材料
+- 完整签名参数
+- 完整解密明文
 
-## 测试方法
+## 测试
 
-建议连续进入普通频道 3~5 次，或在多个普通频道之间切换，每次等画面出来后停 5~10 秒。
+连续进入 3~5 个普通频道，每个停留 5~10 秒。
 
 导出：
+- `Documents/V16_6_DecodeBoundaryProbe.log`
+- `Documents/v16_6_decode_boundary_probe.json`
 
-- `Documents/V16_5_DecodeFeasibilityProbe.log`
-- `Documents/v16_5_decode_feasibility_probe.json`
+如果日志出现：
+`boundary_raw_response -> boundary_base64_* -> boundary_json_output`
+说明 Base64 边界被直接命中。
 
-如果每次都有：
-`limit_raw_response -> decoded_stream_sample -> rtc_handoff`
-
-并且调用栈稳定，就说明 PC 复现这条链在工程上是可行方向。
+如果没有 `boundary_base64_*`，但仍稳定出现：
+`boundary_raw_response -> boundary_json_output`
+说明 Base64 可能走纯 Swift/CryptoSwift 内部路径，下一步再按静态地址/Swift 符号做更窄的探针。
